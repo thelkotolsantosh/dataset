@@ -1,0 +1,264 @@
+# Example Usage of DatasetAnalyzer
+**********
+# This script demonstrates various use cases of the DatasetAnalyzer class.
+
+from dataset import DatasetAnalyzer
+import pandas as pd
+import numpy as np
+
+
+def example_1_basic_analysis():
+    """Example 1: Basic data exploration and summary."""
+    print("\n" + "="*80)
+    print("EXAMPLE 1: Basic Data Exploration")
+    print("="*80)
+    
+    # Create sample data for demonstration
+    sample_data = {
+        'customer_id': range(1, 101),
+        'age': np.random.randint(18, 80, 100),
+        'salary': np.random.normal(50000, 20000, 100),
+        'years_employed': np.random.randint(0, 30, 100),
+        'department': np.random.choice(['Sales', 'IT', 'HR', 'Finance'], 100)
+    }
+    df = pd.DataFrame(sample_data)
+    df.to_csv('/tmp/sample_data.csv', index=False)
+    
+    # Analyze the data
+    analyzer = DatasetAnalyzer('/tmp/sample_data.csv')
+    analyzer.display_summary()
+    
+    # Get basic information
+    info = analyzer.get_basic_info()
+    print("\nDataset Shape:", info['shape'])
+    print("Columns:", info['columns'])
+    print("Memory Usage:", f"{info['memory_usage']:.2f} MB")
+
+
+def example_2_missing_values():
+    """Example 2: Handle missing values."""
+    print("\n" + "="*80)
+    print("EXAMPLE 2: Missing Value Handling")
+    print("="*80)
+    
+    # Create data with missing values
+    sample_data = {
+        'product_id': range(1, 51),
+        'price': [np.nan if i % 10 == 0 else np.random.uniform(10, 100) for i in range(50)],
+        'quantity': [np.nan if i % 8 == 0 else np.random.randint(1, 100) for i in range(50)],
+        'category': [None if i % 7 == 0 else np.random.choice(['A', 'B', 'C']) for i in range(50)]
+    }
+    df = pd.DataFrame(sample_data)
+    df.to_csv('/tmp/data_with_missing.csv', index=False)
+    
+    analyzer = DatasetAnalyzer('/tmp/data_with_missing.csv')
+    
+    print("\nBefore handling missing values:")
+    print(analyzer.df.head(10))
+    print("\nMissing values:")
+    print(analyzer.df.isnull().sum())
+    
+    # Handle missing values
+    df_clean = analyzer.handle_missing_values(strategy='median', threshold=0.3)
+    
+    print("\nAfter handling missing values:")
+    print(df_clean.head(10))
+    print("\nMissing values:")
+    print(df_clean.isnull().sum())
+
+
+def example_3_outlier_detection():
+    """Example 3: Detect outliers."""
+    print("\n" + "="*80)
+    print("EXAMPLE 3: Outlier Detection")
+    print("="*80)
+    
+    # Create data with outliers
+    sample_data = {
+        'transaction_id': range(1, 101),
+        'amount': np.concatenate([
+            np.random.normal(100, 20, 95),  # Normal distribution
+            [500, 600, 1000, 1500, 2000]    # Outliers
+        ])
+    }
+    df = pd.DataFrame(sample_data)
+    df.to_csv('/tmp/data_with_outliers.csv', index=False)
+    
+    analyzer = DatasetAnalyzer('/tmp/data_with_outliers.csv')
+    
+    # Detect outliers using IQR method
+    outliers_iqr = analyzer.get_outliers('amount', method='iqr')
+    print(f"\nOutliers detected (IQR method): {outliers_iqr.sum()}")
+    print("\nOutlier values:")
+    print(analyzer.df[outliers_iqr])
+    
+    # Detect outliers using Z-score method
+    outliers_zscore = analyzer.get_outliers('amount', method='zscore')
+    print(f"\nOutliers detected (Z-score method): {outliers_zscore.sum()}")
+
+
+def example_4_correlation_analysis():
+    """Example 4: Correlation analysis."""
+    print("\n" + "="*80)
+    print("EXAMPLE 4: Correlation Analysis")
+    print("="*80)
+    
+    # Create correlated data
+    np.random.seed(42)
+    sample_data = {
+        'age': np.random.randint(20, 70, 100),
+        'experience': np.random.randint(0, 50, 100),
+        'salary': np.random.normal(60000, 20000, 100),
+        'performance_score': np.random.uniform(1, 10, 100)
+    }
+    df = pd.DataFrame(sample_data)
+    df.to_csv('/tmp/data_correlation.csv', index=False)
+    
+    analyzer = DatasetAnalyzer('/tmp/data_correlation.csv')
+    
+    print("\nCorrelation Matrix:")
+    corr = analyzer.correlate_features()
+    print(corr)
+    
+    print("\nHighly correlated features (> 0.7):")
+    # Find high correlations
+    for i in range(len(corr.columns)):
+        for j in range(i+1, len(corr.columns)):
+            if abs(corr.iloc[i, j]) > 0.7:
+                print(f"{corr.columns[i]} <-> {corr.columns[j]}: {corr.iloc[i, j]:.3f}")
+
+
+def example_5_report_generation():
+    """Example 5: Generate analysis report."""
+    print("\n" + "="*80)
+    print("EXAMPLE 5: Report Generation")
+    print("="*80)
+    
+    # Create sample data
+    sample_data = {
+        'order_id': range(1, 51),
+        'customer_id': np.random.randint(1, 20, 50),
+        'order_value': np.random.uniform(10, 500, 50),
+        'quantity': np.random.randint(1, 10, 50),
+        'shipping_days': np.random.randint(1, 30, 50)
+    }
+    df = pd.DataFrame(sample_data)
+    df.to_csv('/tmp/data_for_report.csv', index=False)
+    
+    analyzer = DatasetAnalyzer('/tmp/data_for_report.csv')
+    analyzer.generate_report('/tmp/analysis_report.txt')
+    
+    # Display report
+    with open('/tmp/analysis_report.txt', 'r') as f:
+        print("\nGenerated Report:")
+        print(f.read())
+
+
+def example_6_data_statistics():
+    """Example 6: Statistical analysis."""
+    print("\n" + "="*80)
+    print("EXAMPLE 6: Statistical Analysis")
+    print("="*80)
+    
+    # Create sample data
+    sample_data = {
+        'student_id': range(1, 51),
+        'math_score': np.random.normal(75, 15, 50),
+        'english_score': np.random.normal(72, 12, 50),
+        'science_score': np.random.normal(78, 14, 50),
+        'attendance': np.random.uniform(70, 100, 50)
+    }
+    df = pd.DataFrame(sample_data)
+    df.to_csv('/tmp/data_statistics.csv', index=False)
+    
+    analyzer = DatasetAnalyzer('/tmp/data_statistics.csv')
+    
+    print("\nDescriptive Statistics:")
+    print(analyzer.df.describe())
+    
+    print("\nData Types:")
+    print(analyzer.df.dtypes)
+    
+    print("\nValue Counts (if any categorical columns):")
+    categorical_cols = analyzer.df.select_dtypes(include=['object']).columns
+    if len(categorical_cols) > 0:
+        print(analyzer.df[categorical_cols[0]].value_counts())
+
+
+def example_7_advanced_workflow():
+    """Example 7: Complete advanced workflow."""
+    print("\n" + "="*80)
+    print("EXAMPLE 7: Complete Advanced Workflow")
+    print("="*80)
+    
+    # Create complex sample data
+    np.random.seed(42)
+    sample_data = {
+        'employee_id': range(1, 101),
+        'age': np.random.randint(22, 65, 100),
+        'salary': np.random.normal(55000, 25000, 100),
+        'years_experience': np.random.randint(0, 40, 100),
+        'performance_rating': np.random.uniform(1, 5, 100),
+        'department': np.random.choice(['Sales', 'IT', 'HR', 'Finance'], 100),
+        'bonus': [np.nan if i % 5 == 0 else np.random.uniform(1000, 5000) for i in range(100)]
+    }
+    
+    df = pd.DataFrame(sample_data)
+    df.to_csv('/tmp/employee_data.csv', index=False)
+    
+    # Step 1: Load and explore
+    analyzer = DatasetAnalyzer('/tmp/employee_data.csv')
+    print("\n1. Initial Data Summary:")
+    info = analyzer.get_basic_info()
+    print(f"   Shape: {info['shape']}")
+    print(f"   Missing values: {sum(info['missing_values'].values())}")
+    
+    # Step 2: Clean data
+    print("\n2. Cleaning Data...")
+    df_clean = analyzer.handle_missing_values(strategy='mean')
+    
+    # Step 3: Analyze correlations
+    print("\n3. Correlation Analysis:")
+    corr = analyzer.correlate_features()
+    print(corr.iloc[:3, :3])  # Print subset
+    
+    # Step 4: Detect outliers
+    print("\n4. Outlier Detection:")
+    outliers = analyzer.get_outliers('salary', method='iqr')
+    print(f"   Outliers in salary: {outliers.sum()}")
+    
+    # Step 5: Generate report
+    print("\n5. Generating Report...")
+    analyzer.generate_report('/tmp/employee_report.txt')
+    print("   Report saved!")
+    
+    print("\n✓ Workflow complete!")
+
+
+def main():
+    """Run all examples."""
+    print("\n" + "="*80)
+    print("DATASET ANALYZER - EXAMPLES")
+    print("="*80)
+    
+    try:
+        example_1_basic_analysis()
+        example_2_missing_values()
+        example_3_outlier_detection()
+        example_4_correlation_analysis()
+        example_5_report_generation()
+        example_6_data_statistics()
+        example_7_advanced_workflow()
+        
+        print("\n" + "="*80)
+        print("✓ All examples completed successfully!")
+        print("="*80 + "\n")
+        
+    except Exception as e:
+        print(f"\n✗ Error running examples: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+
+if __name__ == '__main__':
+    main()
