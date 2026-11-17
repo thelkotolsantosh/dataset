@@ -20,6 +20,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/dataset",
     packages=find_packages(),
+    py_modules=["dataset"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",

@@ -1,6 +1,6 @@
 # Dataset Analysis Module
 # A comprehensive module for data exploration, analysis, and visualization.
-Includes functions for loading data, statistical analysis, and generating insights.
+# Includes functions for loading data, statistical analysis, and generating insights.
 
 import pandas as pd
 import numpy as np
@@ -113,6 +113,8 @@ class DatasetAnalyzer:
             pd.DataFrame: DataFrame with missing values handled
         """
         df_clean = self.df.copy()
+        if strategy not in {'mean', 'median', 'forward_fill', 'drop'}:
+            raise ValueError('Unknown missing-value strategy')
         
         # Drop columns with too many missing values
         missing_percent = df_clean.isnull().sum() / len(df_clean)
@@ -126,14 +128,20 @@ class DatasetAnalyzer:
         
         if strategy == 'mean':
             df_clean[numeric_cols] = df_clean[numeric_cols].fillna(df_clean[numeric_cols].mean())
-            df_clean[categorical_cols] = df_clean[categorical_cols].fillna(df_clean[categorical_cols].mode().iloc[0])
+            for column in categorical_cols:
+                mode = df_clean[column].mode()
+                if not mode.empty:
+                    df_clean[column] = df_clean[column].fillna(mode.iloc[0])
         
         elif strategy == 'median':
             df_clean[numeric_cols] = df_clean[numeric_cols].fillna(df_clean[numeric_cols].median())
-            df_clean[categorical_cols] = df_clean[categorical_cols].fillna(df_clean[categorical_cols].mode().iloc[0])
+            for column in categorical_cols:
+                mode = df_clean[column].mode()
+                if not mode.empty:
+                    df_clean[column] = df_clean[column].fillna(mode.iloc[0])
         
         elif strategy == 'forward_fill':
-            df_clean = df_clean.fillna(method='ffill').fillna(method='bfill')
+            df_clean = df_clean.ffill().bfill()
         
         elif strategy == 'drop':
             df_clean = df_clean.dropna()
